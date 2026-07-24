@@ -1,0 +1,8 @@
+{
+  "name": "Remix: BCA Korporasi",
+  "description": "Portal Informasi BCA Korporasi (Simulasi)",
+  "requestFramePermissions": [],
+  "majorCapabilities": [
+    "MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"
+  ]
+}
