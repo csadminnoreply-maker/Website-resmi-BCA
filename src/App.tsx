@@ -13,8 +13,10 @@ export default function App() {
   }, []);
 
   return (
-    <div className="min-h-screen bg-[#00528D] text-slate-100 font-sans antialiased">
-      <BcaSitePreview />
+    <div className="min-h-screen bg-slate-950 flex items-center justify-center text-slate-100 font-sans antialiased overflow-hidden">
+      <div className="w-full max-w-[480px] h-[100dvh] max-h-[100dvh] bg-[#00528D] shadow-2xl relative overflow-hidden flex flex-col sm:border sm:border-white/10 sm:rounded-2xl">
+        <BcaSitePreview />
+      </div>
     </div>
   );
 }

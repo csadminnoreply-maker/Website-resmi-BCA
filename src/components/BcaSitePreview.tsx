@@ -267,11 +267,11 @@ export const BcaSitePreview: React.FC = () => {
       <section className="relative flex-1 flex flex-col justify-between p-3.5 sm:p-6 pb-24 sm:pb-28 overflow-y-auto z-10 scrollbar-none">
 
         {/* Hero Content Text */}
-        <div className="relative z-20 max-w-2xl mt-1 sm:mt-2 space-y-1.5 sm:space-y-2 shrink-0">
-          <h1 className="text-xl sm:text-3xl md:text-5xl font-extrabold text-white leading-tight tracking-tight drop-shadow-md min-h-[3.2rem] sm:min-h-[4.5rem]">
+        <div className="relative z-20 max-w-2xl mt-1 sm:mt-2 space-y-2 sm:space-y-3 shrink-0">
+          <h1 className="text-2xl sm:text-4xl md:text-5xl font-extrabold text-white leading-tight tracking-tight drop-shadow-md min-h-[3.8rem] sm:min-h-[5.5rem]">
             {typedTitle}
           </h1>
-          <p className="text-[11px] sm:text-sm text-blue-100 max-w-xl font-normal leading-relaxed min-h-[2.8rem] sm:min-h-[3.2rem]">
+          <p className="text-xs sm:text-base md:text-lg text-blue-100/95 max-w-2xl font-medium leading-relaxed min-h-[3.2rem] sm:min-h-[3.8rem]">
             {typedDesc}
           </p>
         </div>
@@ -348,8 +348,8 @@ export const BcaSitePreview: React.FC = () => {
       </section>
 
       {/* Bottom Fixed Navigation Bar matching official reference image */}
-      <aside className="fixed bottom-0 left-0 right-0 z-40 bg-[#0066AE] border-t border-[#28B4E8]/30 shadow-2xl backdrop-blur-lg pb-[env(safe-area-inset-bottom)] shrink-0">
-        <div className="max-w-7xl mx-auto grid grid-cols-6 text-center text-white divide-x divide-white/20">
+      <aside className="absolute bottom-0 left-0 right-0 z-40 bg-[#0066AE] border-t border-[#28B4E8]/30 shadow-2xl backdrop-blur-lg pb-[env(safe-area-inset-bottom)] shrink-0">
+        <div className="w-full grid grid-cols-6 text-center text-white divide-x divide-white/20">
           {SMARTBAR_ITEMS.map((item) => {
             const IconComponent = item.icon;
             const isChatAi = item.isAi;
@@ -413,7 +413,7 @@ export const BcaSitePreview: React.FC = () => {
 
       {/* Full-screen Loading Page Transition Overlay matching user reference image */}
       {isPageLoading && (
-        <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-200">
+        <div className="absolute inset-0 z-50 flex flex-col items-center justify-center bg-slate-900/70 backdrop-blur-md animate-in fade-in duration-200">
           <div className="flex flex-col items-center justify-center space-y-4">
             {/* Pulsing Glowing Container & Centered BCA Logo */}
             <div className="relative flex items-center justify-center p-5">

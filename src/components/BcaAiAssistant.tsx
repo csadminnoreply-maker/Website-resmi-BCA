@@ -97,7 +97,7 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 sm:inset-auto sm:bottom-16 sm:right-6 sm:w-[420px] sm:h-[580px] z-50 flex flex-col bg-white border border-slate-200 sm:rounded-2xl shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
+    <div className="absolute inset-0 z-50 flex flex-col bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
       
       {/* Header - Official BCA Corporate Blue */}
       <div className="bg-[#0066AE] px-4 py-3.5 border-b border-[#00528D] flex items-center justify-between shrink-0 shadow-md">
