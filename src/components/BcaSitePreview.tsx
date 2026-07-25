@@ -7,7 +7,9 @@ import {
   CreditCard,
   RotateCcw,
   KeyRound,
+  ChevronLeft,
   ChevronRight,
+  MoveRight,
   LogIn,
   LayoutGrid,
   Heart,
@@ -118,6 +120,8 @@ export const BcaSitePreview: React.FC = () => {
   const [currentMessageIndex, setCurrentMessageIndex] = useState(0);
   const [typedTitle, setTypedTitle] = useState("");
   const [typedDesc, setTypedDesc] = useState("");
+  const [canScrollLeft, setCanScrollLeft] = useState(false);
+  const [canScrollRight, setCanScrollRight] = useState(true);
 
   const handleNavigate = (targetTabId?: string, url?: string) => {
     setIsPageLoading(true);
@@ -129,6 +133,36 @@ export const BcaSitePreview: React.FC = () => {
       }
     }, 1100);
   };
+
+  // Scroll sync: Automatically scroll card into view when currentMessageIndex changes
+  useEffect(() => {
+    if (scrollContainerRef.current) {
+      const activeCardEl = scrollContainerRef.current.children[currentMessageIndex] as HTMLElement;
+      if (activeCardEl) {
+        activeCardEl.scrollIntoView({
+          behavior: 'smooth',
+          block: 'nearest',
+          inline: 'center'
+        });
+      }
+    }
+  }, [currentMessageIndex]);
+
+  // Initial swipe hint "nudge" animation on mount
+  useEffect(() => {
+    const hintTimer = setTimeout(() => {
+      if (scrollContainerRef.current) {
+        scrollContainerRef.current.scrollBy({ left: 45, behavior: 'smooth' });
+        setTimeout(() => {
+          if (scrollContainerRef.current) {
+            scrollContainerRef.current.scrollBy({ left: -45, behavior: 'smooth' });
+          }
+        }, 500);
+      }
+    }, 1200);
+
+    return () => clearTimeout(hintTimer);
+  }, []);
 
   useEffect(() => {
     let isMounted = true;
@@ -180,6 +214,13 @@ export const BcaSitePreview: React.FC = () => {
     };
   }, [currentMessageIndex]);
 
+  const updateScrollButtons = () => {
+    if (!scrollContainerRef.current) return;
+    const { scrollLeft, scrollWidth, clientWidth } = scrollContainerRef.current;
+    setCanScrollLeft(scrollLeft > 10);
+    setCanScrollRight(scrollLeft + clientWidth < scrollWidth - 10);
+  };
+
   const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
     const container = e.currentTarget;
     const scrollPosition = container.scrollLeft;
@@ -187,20 +228,15 @@ export const BcaSitePreview: React.FC = () => {
     if (maxScroll <= 0) return;
 
     const ratio = scrollPosition / maxScroll;
-    const newIndex = Math.min(2, Math.max(0, Math.round(ratio * 2)));
+    const newIndex = Math.min(3, Math.max(0, Math.round(ratio * 3)));
     setCarouselIndex(newIndex);
+    updateScrollButtons();
   };
 
-  const scrollToDot = (index: number) => {
-    setCarouselIndex(index);
+  const scrollByDirection = (direction: 'left' | 'right') => {
     if (!scrollContainerRef.current) return;
-    const container = scrollContainerRef.current;
-    const maxScroll = container.scrollWidth - container.clientWidth;
-    const targetScroll = (maxScroll / 2) * index;
-    container.scrollTo({
-      left: targetScroll,
-      behavior: 'smooth'
-    });
+    const scrollAmount = direction === 'left' ? -150 : 150;
+    scrollContainerRef.current.scrollBy({ left: scrollAmount, behavior: 'smooth' });
   };
 
   return (
@@ -282,65 +318,98 @@ export const BcaSitePreview: React.FC = () => {
             <h2 className="text-sm sm:text-lg font-bold text-white tracking-wide">
               Pilih Kebutuhanmu
             </h2>
-            <div className="flex items-center gap-1 text-[10px] sm:text-[11px] text-cyan-200 font-medium animate-pulse">
-              <span>Geser Usap</span>
-              <ChevronRight className="w-3.5 h-3.5" />
+            <div className="flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-cyan-300/20 border border-cyan-300/40 text-[11px] font-bold text-cyan-200 shadow-sm animate-pulse">
+              <span>Geser menu</span>
+              <MoveRight className="w-3.5 h-3.5 animate-bounce-x text-cyan-300 stroke-[2.5]" />
             </div>
           </div>
 
-          {/* Touch Swiping Cards Container */}
-          <div
-            ref={scrollContainerRef}
-            onScroll={handleScroll}
-            className="flex gap-2.5 sm:gap-4 overflow-x-auto snap-x snap-mandatory py-2.5 px-1.5 -mx-1.5 scrollbar-none scroll-smooth touch-pan-x"
-            style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-          >
-            {NEEDS_CARDS.map((card, idx) => {
-              const CardIcon = card.icon;
-              const isSelected = currentMessageIndex === idx;
-              return (
-                <a
-                  key={card.id}
-                  href={card.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    setCurrentMessageIndex(idx);
-                    handleNavigate(undefined, card.url);
-                  }}
-                  onMouseEnter={() => setCurrentMessageIndex(idx)}
-                  className={`group snap-start shrink-0 w-[calc(50%-6px)] min-w-[140px] sm:w-[calc(33.33%-10px)] md:w-[calc(25%-12px)] bg-white hover:bg-slate-50 p-3.5 sm:p-5 rounded-2xl flex flex-col items-center text-center justify-center space-y-2.5 sm:space-y-3.5 shadow-md transition-all duration-300 ease-out hover:scale-105 active:scale-95 cursor-pointer no-underline touch-manipulation relative overflow-hidden min-h-[118px] sm:min-h-[140px] ${
-                    isSelected
-                      ? 'border-2 border-cyan-400 shadow-xl shadow-cyan-500/20 scale-[1.02]'
-                      : 'border-2 border-transparent opacity-95'
-                  }`}
-                >
-                  <div className={`p-2 sm:p-2.5 rounded-2xl transition-colors duration-200 shrink-0 ${
-                    isSelected ? 'bg-blue-100 text-[#005FA8]' : 'bg-blue-50/90 text-[#0066AE] group-hover:bg-blue-100'
-                  }`}>
-                    <CardIcon className="w-9 h-9 sm:w-11 sm:h-11 stroke-[1.8] transition-transform duration-200 group-hover:scale-110" />
-                  </div>
-                  <span className="text-[12px] sm:text-sm font-extrabold text-[#003B73] leading-tight text-center tracking-tight">
-                    {card.title}
-                  </span>
-                </a>
-              );
-            })}
+          {/* Cards Carousel Container with Floating Navigation Arrows */}
+          <div className="relative group/carousel">
+            {/* Left Navigation Arrow Button */}
+            {canScrollLeft && (
+              <button
+                onClick={() => scrollByDirection('left')}
+                className="absolute -left-2 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-slate-900/80 hover:bg-slate-900 text-white backdrop-blur-md shadow-xl border border-white/20 transition-all cursor-pointer active:scale-90"
+                aria-label="Geser ke kiri"
+              >
+                <ChevronLeft className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Right Navigation Arrow Button with Bounce Animation */}
+            {canScrollRight && (
+              <button
+                onClick={() => scrollByDirection('right')}
+                className="absolute -right-2 top-1/2 -translate-y-1/2 z-30 p-2 rounded-full bg-[#0066AE] hover:bg-[#00528D] text-white backdrop-blur-md shadow-xl border border-cyan-300/50 transition-all cursor-pointer active:scale-90 animate-bounce-x"
+                aria-label="Geser ke kanan"
+              >
+                <ChevronRight className="w-4 h-4 stroke-[2.5]" />
+              </button>
+            )}
+
+            {/* Touch Swiping Cards Container with Peeking Width */}
+            <div
+              ref={scrollContainerRef}
+              onScroll={handleScroll}
+              className="flex gap-2.5 sm:gap-3.5 overflow-x-auto snap-x snap-mandatory py-2.5 px-1 -mx-1 scrollbar-none scroll-smooth touch-pan-x"
+              style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+            >
+              {NEEDS_CARDS.map((card, idx) => {
+                const CardIcon = card.icon;
+                const isSelected = currentMessageIndex === idx;
+                return (
+                  <a
+                    key={card.id}
+                    href={card.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      setCurrentMessageIndex(idx);
+                      handleNavigate(undefined, card.url);
+                    }}
+                    onMouseEnter={() => setCurrentMessageIndex(idx)}
+                    className={`group/card snap-start shrink-0 w-[136px] xs:w-[145px] sm:w-[160px] bg-white hover:bg-slate-50 p-3 sm:p-4 rounded-2xl flex flex-col items-center text-center justify-center space-y-2 sm:space-y-3 shadow-md transition-all duration-300 ease-out hover:scale-[1.03] active:scale-95 cursor-pointer no-underline touch-manipulation relative overflow-hidden min-h-[115px] sm:min-h-[135px] ${
+                      isSelected
+                        ? 'border-2 border-cyan-400 shadow-xl shadow-cyan-500/20 scale-[1.02]'
+                        : 'border-2 border-transparent opacity-95'
+                    }`}
+                  >
+                    <div className={`p-2 sm:p-2.5 rounded-2xl transition-colors duration-200 shrink-0 ${
+                      isSelected ? 'bg-blue-100 text-[#005FA8]' : 'bg-blue-50/90 text-[#0066AE] group-hover/card:bg-blue-100'
+                    }`}>
+                      <CardIcon className="w-8 h-8 sm:w-10 sm:h-10 stroke-[1.8] transition-transform duration-200 group-hover/card:scale-110" />
+                    </div>
+                    <span className="text-[11.5px] sm:text-xs font-extrabold text-[#003B73] leading-tight text-center tracking-tight">
+                      {card.title}
+                    </span>
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
-          {/* Interactive Pagination Dots (`● ○ ○`) */}
+          {/* Interactive Pagination Dots (4 Dots) */}
           <div className="flex justify-center items-center space-x-2 pt-0.5">
-            {[0, 1, 2].map((dot) => (
+            {NEEDS_CARDS.map((_, dotIdx) => (
               <button
-                key={dot}
-                onClick={() => scrollToDot(dot)}
-                className={`transition-all duration-300 rounded-full focus:outline-none active:scale-75 ${
-                  carouselIndex === dot
-                    ? 'w-5 sm:w-6 h-2 sm:h-2.5 bg-blue-400 shadow-lg shadow-blue-500/50'
+                key={dotIdx}
+                onClick={() => {
+                  setCurrentMessageIndex(dotIdx);
+                  if (scrollContainerRef.current) {
+                    const targetCard = scrollContainerRef.current.children[dotIdx] as HTMLElement;
+                    if (targetCard) {
+                      targetCard.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+                    }
+                  }
+                }}
+                className={`transition-all duration-300 rounded-full focus:outline-none active:scale-75 cursor-pointer ${
+                  currentMessageIndex === dotIdx
+                    ? 'w-6 h-2 sm:h-2.5 bg-cyan-300 shadow-lg shadow-cyan-400/50'
                     : 'w-2 sm:w-2.5 h-2 sm:h-2.5 bg-white/40 hover:bg-white/70'
                 }`}
-                aria-label={`Slide ${dot + 1}`}
+                aria-label={`Menu ${dotIdx + 1}`}
               />
             ))}
           </div>

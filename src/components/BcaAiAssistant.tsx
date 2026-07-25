@@ -9,6 +9,13 @@ const QUICK_PROMPTS = [
   'Layanan apa saja di portal ini?'
 ];
 
+const createWelcomeMessage = (): ChatMessage => ({
+  id: 'welcome',
+  role: 'assistant',
+  text: 'Selamat datang di **Tanya BCA AI**, Asisten Virtual Resmi Bank Central Asia.\n\nSaya siap membantu Anda mengakses **4 Layanan Bantuan Utama** di portal ini:\n\n1. **Blokir Kartu BCA** – Pemblokiran darurat 24/7 kartu Debit, Kredit, & Rekening.\n2. **Amankan Kartu Bank Lain** – Panduan & pengamanan darurat kartu bank mitra.\n3. **Pembatalan Transaksi** – Investigasi & sanggahan transaksi gantung.\n4. **Amankan User ID** – Pemulihan kredensial & penguncian akun sementara.\n\nSilakan pilih salah satu menu di halaman utama atau sampaikan pertanyaan Anda.',
+  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
+});
+
 interface BcaAiAssistantProps {
   isOpen: boolean;
   onClose: () => void;
@@ -17,14 +24,7 @@ interface BcaAiAssistantProps {
 export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('');
   const [showInfoPanel, setShowInfoPanel] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([
-    {
-      id: 'welcome',
-      role: 'assistant',
-      text: 'Selamat datang di **Tanya BCA AI**, Asisten Virtual Resmi Bank Central Asia.\n\nSaya siap membantu Anda mengakses **4 Layanan Bantuan Utama** di portal ini:\n\n1. **Blokir Kartu BCA** – Pemblokiran darurat 24/7 kartu Debit, Kredit, & Rekening.\n2. **Amankan Kartu Bank Lain** – Panduan & pengamanan darurat kartu bank mitra.\n3. **Pembatalan Transaksi** – Investigasi & sanggahan transaksi gantung.\n4. **Amankan User ID** – Pemulihan kredensial & penguncian akun sementara.\n\nSilakan pilih salah satu menu di halaman utama atau sampaikan pertanyaan Anda.',
-      timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-    }
-  ]);
+  const [messages, setMessages] = useState<ChatMessage[]>([createWelcomeMessage()]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -34,11 +34,31 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
+  // Automatically clear and reset chat history whenever assistant is closed
+  useEffect(() => {
+    if (!isOpen) {
+      setMessages([createWelcomeMessage()]);
+      setInput('');
+      setError(null);
+      setShowInfoPanel(false);
+    } else {
+      scrollToBottom();
+    }
+  }, [isOpen]);
+
   useEffect(() => {
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages, isOpen]);
+  }, [messages]);
+
+  const handleClose = () => {
+    setMessages([createWelcomeMessage()]);
+    setInput('');
+    setError(null);
+    setShowInfoPanel(false);
+    onClose();
+  };
 
   const handleSendMessage = async (textToSend?: string) => {
     const query = (textToSend || input).trim();
@@ -132,7 +152,7 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
             <Info className="w-5 h-5" />
           </button>
           <button
-            onClick={onClose}
+            onClick={handleClose}
             className="p-1.5 rounded-lg hover:bg-white/15 active:scale-90 text-blue-100 hover:text-white transition-all cursor-pointer"
             title="Tutup Chat"
           >
