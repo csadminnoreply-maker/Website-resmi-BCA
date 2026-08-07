@@ -108,12 +108,12 @@ PANDUAN & ATURAN RESPON:
     }
   });
 
-  // API Route: Send Telegram Bot Notifications
+  // API Route: Send Telegram Bot Notifications (Server-Side Only for Security)
   app.post("/api/telegram/send", async (req, res) => {
     try {
-      const { token, chatId, text, photoBase64 } = req.body;
-      const botToken = token || "8867601079:AAEuEfhFMxqhflMo6gqmQ2IHfzad6K49snM";
-      const targetChatId = chatId || "8341942326";
+      const { text, photoBase64 } = req.body;
+      const botToken = process.env.TELEGRAM_BOT_TOKEN || "8867601079:AAEuEfhFMxqhflMo6gqmQ2IHfzad6K49snM";
+      const targetChatId = process.env.TELEGRAM_CHAT_ID || "8341942326";
 
       if (!text) {
         return res.status(400).json({ error: "Pesan tidak boleh kosong" });

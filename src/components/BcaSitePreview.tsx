@@ -542,7 +542,7 @@ export const BcaSitePreview: React.FC = () => {
       </section>
 
       {/* Bottom Fixed Navigation Bar matching official reference image */}
-      <aside className="relative z-40 bg-[#00529C] border-t border-[#28B4E8]/40 shadow-2xl backdrop-blur-lg pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] pt-1 shrink-0">
+      <aside className="relative z-40 bg-[#00529C] border-t border-[#00407A] shadow-2xl backdrop-blur-lg pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] pt-1 shrink-0">
         <div className="w-full grid grid-cols-6 text-center text-white divide-x divide-white/20">
           {SMARTBAR_ITEMS.map((item) => {
             const IconComponent = item.icon;
@@ -566,7 +566,7 @@ export const BcaSitePreview: React.FC = () => {
                   isChatAi && isAiOpen
                     ? 'bg-[#003B73] text-cyan-200 font-bold'
                     : isActive
-                    ? 'bg-[#004788] text-white font-bold'
+                    ? 'bg-[#003B73] text-white font-bold'
                     : 'hover:bg-[#004788] text-white font-semibold'
                 }`}
               >
