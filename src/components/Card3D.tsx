@@ -22,20 +22,27 @@ export const Card3D: React.FC<Card3DProps> = ({
   expiryValue,
 }) => {
   return (
-    <div className="w-full perspective-1000 my-3">
+    <div className="w-full my-3" style={{ perspective: '1000px', WebkitPerspective: '1000px' }}>
       <motion.div
-        className="w-full h-44 sm:h-48 rounded-2xl p-4 sm:p-5 text-white shadow-xl relative preserve-3d transition-all duration-500 overflow-hidden border border-white/20"
+        className="w-full h-44 sm:h-48 rounded-2xl text-white shadow-xl relative border border-white/20"
         style={{
           background: cardGradient || 'linear-gradient(135deg, #004d85, #0066AE)',
+          transformStyle: 'preserve-3d',
+          WebkitTransformStyle: 'preserve-3d',
+          willChange: 'transform',
         }}
         animate={{ rotateY: isFlipped ? 180 : 0 }}
-        transition={{ duration: 0.6, ease: [0.23, 1, 0.32, 1] }}
+        transition={{ duration: 0.5, ease: [0.25, 1, 0.5, 1] }}
       >
         {/* FRONT CARD */}
         <div
-          className={`absolute inset-0 p-4 sm:p-5 flex flex-col justify-between backface-hidden ${
-            isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'
-          }`}
+          className="absolute inset-0 p-4 sm:p-5 flex flex-col justify-between rounded-2xl bg-gradient-to-br from-white/10 to-transparent"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'translateZ(1px)',
+            WebkitTransform: 'translateZ(1px)',
+          }}
         >
           {/* Top row: Bank Name & Brand Info */}
           <div className="flex justify-between items-start gap-2">
@@ -89,9 +96,13 @@ export const Card3D: React.FC<Card3DProps> = ({
 
         {/* BACK CARD */}
         <div
-          className={`absolute inset-0 pt-4 flex flex-col justify-between backface-hidden [transform:rotateY(180deg)] ${
-            !isFlipped ? 'pointer-events-none opacity-0' : 'opacity-100'
-          }`}
+          className="absolute inset-0 pt-4 flex flex-col justify-between rounded-2xl bg-gradient-to-br from-black/20 to-transparent"
+          style={{
+            backfaceVisibility: 'hidden',
+            WebkitBackfaceVisibility: 'hidden',
+            transform: 'rotateY(180deg) translateZ(1px)',
+            WebkitTransform: 'rotateY(180deg) translateZ(1px)',
+          }}
         >
           <div className="w-full h-10 bg-slate-900 mt-2 shadow-inner" />
 
