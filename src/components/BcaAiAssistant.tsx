@@ -1,20 +1,118 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { Send, X, Sparkles, User, AlertCircle, Info, ShieldCheck, Cpu } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Send, X, AlertCircle, Phone, ShieldAlert, Copy, ExternalLink, FileText, Headphones, CheckCircle2 } from 'lucide-react';
 import { ChatMessage } from '../types';
+import { triggerHaptic } from '../utils/haptics';
 
-const QUICK_PROMPTS = [
-  'Bagaimana cara blokir Kartu BCA darurat?',
-  'Bagaimana alur pembatalan transaksi?',
-  'Bagaimana cara amankan User ID?',
-  'Layanan apa saja di portal ini?'
+const formatMessageContent = (text: string, role: 'user' | 'assistant') => {
+  const cleaned = text.replace(/<[^>]*>?/gm, '').replace(/###\s?/g, '');
+  return cleaned.split('\n').map((line, idx) => {
+    const parts = line.split(/(\*\*.*?\*\*)/g);
+    return (
+      <p key={idx} className="min-h-[1.1rem]">
+        {parts.map((part, pIdx) => {
+          if (part.startsWith('**') && part.endsWith('**')) {
+            return (
+              <strong key={pIdx} className={role === 'user' ? 'font-bold text-white' : 'font-bold text-[#003B73]'}>
+                {part.slice(2, -2)}
+              </strong>
+            );
+          }
+          return part;
+        })}
+      </p>
+    );
+  });
+};
+
+const BcaBotIcon = ({ className = "w-6 h-6" }: { className?: string }) => (
+  <svg className={className} viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+    <rect x="4" y="6" width="16" height="12" rx="3" stroke="currentColor" strokeWidth="2" fill="none" />
+    <path d="M12 2V6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <circle cx="12" cy="2" r="1" fill="currentColor" />
+    <rect x="8" y="9" width="2" height="2" rx="0.5" fill="currentColor" />
+    <rect x="14" y="9" width="2" height="2" rx="0.5" fill="currentColor" />
+    <path d="M9 14H15" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+    <rect x="2" y="10" width="2" height="4" rx="1" fill="currentColor" />
+    <rect x="20" y="10" width="2" height="4" rx="1" fill="currentColor" />
+  </svg>
+);
+
+const QUICK_OPTIONS = [
+  'Blokir Kartu BCA',
+  'Pembatalan Transaksi',
+  'Amankan User ID',
+  'Produk & Promo',
+  'Layanan Halo BCA'
 ];
 
-const createWelcomeMessage = (): ChatMessage => ({
-  id: 'welcome',
-  role: 'assistant',
-  text: 'Selamat datang di **Tanya BCA AI**, Asisten Virtual Resmi Bank Central Asia.\n\nSaya siap membantu Anda mengakses **4 Layanan Bantuan Utama** di portal ini:\n\n1. **Blokir Kartu BCA** – Pemblokiran darurat 24/7 kartu Debit, Kredit, & Rekening.\n2. **Amankan Kartu Bank Lain** – Panduan & pengamanan darurat kartu bank mitra.\n3. **Pembatalan Transaksi** – Investigasi & sanggahan transaksi gantung.\n4. **Amankan User ID** – Pemulihan kredensial & penguncian akun sementara.\n\nSilakan pilih salah satu menu di halaman utama atau sampaikan pertanyaan Anda.',
-  timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })
-});
+interface InChatButton {
+  label: string;
+  icon: React.ReactNode;
+  actionType: 'call' | 'copy' | 'prompt';
+  value: string;
+}
+
+const getInChatActionButtons = (text: string): InChatButton[] => {
+  const lower = text.toLowerCase();
+  const buttons: InChatButton[] = [];
+
+  if (lower.includes('blokir') || lower.includes('kartu') || lower.includes('darurat')) {
+    buttons.push({
+      label: 'Proses Blokir Kartu',
+      icon: <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />,
+      actionType: 'prompt',
+      value: 'Bagaimana cara langsung blokir kartu Debit/Kredit saya sekarang?'
+    });
+    buttons.push({
+      label: 'Hubungi Halo BCA 1500888',
+      icon: <Phone className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'call',
+      value: '1500888'
+    });
+  } else if (lower.includes('saldo') || lower.includes('mutasi') || lower.includes('rekening')) {
+    buttons.push({
+      label: 'Langkah Cek Saldo myBCA',
+      icon: <ExternalLink className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'prompt',
+      value: 'Tampilkan langkah-langkah akses mutasi dan info saldo di myBCA'
+    });
+    buttons.push({
+      label: 'Hubungi Halo BCA',
+      icon: <Phone className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'call',
+      value: '1500888'
+    });
+  } else if (lower.includes('transfer') || lower.includes('bi-fast') || lower.includes('limit')) {
+    buttons.push({
+      label: 'Info Limit Transfer',
+      icon: <FileText className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'prompt',
+      value: 'Berapa limit harian transfer antarbank dan BI-FAST?'
+    });
+    buttons.push({
+      label: 'Hubungi CS BCA',
+      icon: <Headphones className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'call',
+      value: '1500888'
+    });
+  } else {
+    buttons.push({
+      label: 'Salin Jawaban',
+      icon: <Copy className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'copy',
+      value: text
+    });
+    buttons.push({
+      label: 'Hubungi Halo BCA 1500888',
+      icon: <Phone className="w-3.5 h-3.5 text-[#004070]" />,
+      actionType: 'call',
+      value: '1500888'
+    });
+  }
+
+  return buttons;
+};
 
 interface BcaAiAssistantProps {
   isOpen: boolean;
@@ -23,24 +121,40 @@ interface BcaAiAssistantProps {
 
 export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose }) => {
   const [input, setInput] = useState('');
-  const [showInfoPanel, setShowInfoPanel] = useState(false);
-  const [messages, setMessages] = useState<ChatMessage[]>([createWelcomeMessage()]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [toastMessage, setToastMessage] = useState<string | null>(null);
 
   const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  const showNotification = (msg: string) => {
+    setToastMessage(msg);
+    setTimeout(() => setToastMessage(null), 3000);
+  };
+
+  const handleActionButtonClick = (btn: InChatButton) => {
+    triggerHaptic(12);
+    if (btn.actionType === 'call') {
+      window.open(`tel:${btn.value}`, '_self');
+      showNotification(`Menghubungi Halo BCA ${btn.value}...`);
+    } else if (btn.actionType === 'copy') {
+      navigator.clipboard?.writeText(btn.value);
+      showNotification('Teks berhasil disalin ke papan klip!');
+    } else if (btn.actionType === 'prompt') {
+      handleSendMessage(btn.value);
+    }
+  };
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
   };
 
-  // Automatically clear and reset chat history whenever assistant is closed
   useEffect(() => {
     if (!isOpen) {
-      setMessages([createWelcomeMessage()]);
+      setMessages([]);
       setInput('');
       setError(null);
-      setShowInfoPanel(false);
     } else {
       scrollToBottom();
     }
@@ -50,17 +164,18 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
     if (isOpen) {
       scrollToBottom();
     }
-  }, [messages]);
+  }, [messages, isLoading]);
 
   const handleClose = () => {
-    setMessages([createWelcomeMessage()]);
+    triggerHaptic(10);
+    setMessages([]);
     setInput('');
     setError(null);
-    setShowInfoPanel(false);
     onClose();
   };
 
   const handleSendMessage = async (textToSend?: string) => {
+    triggerHaptic(14);
     const query = (textToSend || input).trim();
     if (!query || isLoading) return;
 
@@ -95,7 +210,7 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
       const data = await res.json();
 
       if (!res.ok) {
-        throw new Error(data.error || 'Gagal terhubung dengan Tanya BCA AI.');
+        throw new Error(data.error || 'Gagal terhubung dengan Live Chat BCA.');
       }
 
       const assistantMsg: ChatMessage = {
@@ -114,173 +229,137 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
     }
   };
 
-  if (!isOpen) return null;
-
   return (
-    <div className="absolute inset-0 z-50 flex flex-col bg-white overflow-hidden animate-in fade-in slide-in-from-bottom-5 duration-200">
-      
-      {/* Header - Official BCA Corporate Blue */}
-      <div className="bg-[#0066AE] px-4 py-3.5 border-b border-[#00528D] flex items-center justify-between shrink-0 shadow-md">
-        <div className="flex items-center gap-3">
-          <div className="p-1 bg-white rounded-xl shadow-inner flex items-center justify-center shrink-0 w-8 h-8 overflow-hidden">
+    <AnimatePresence>
+      {isOpen && (
+        <motion.div
+          initial={{ opacity: 0, y: '100%' }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: '100%' }}
+          transition={{ type: 'spring', damping: 30, stiffness: 350 }}
+          className="absolute inset-0 z-50 flex flex-col bg-[#F2F4F8] overflow-hidden font-sans"
+        >
+          {/* Top Header matching 1:1 screenshot */}
+      <header className="bg-[#FFFFFF] shrink-0 border-b border-slate-200 shadow-xs">
+        {/* Row 1: BCA Logo & Hamburger / Close Button */}
+        <div className="px-5 py-3 flex items-center justify-between">
+          <div className="flex items-center gap-2">
             <img
               src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiEShyphenhyphenecrz4Lyrs3a8-h3oG-6Hqh5FMdYhVba8_4NMy_60IXDS6stwE6cSp_LL9TfhfpLM4I6IyGZTZUL5ZfTOHAsTKTYx8FqW3xVPM0_RiXRRBgoajU6OT-G5BXtKPFzMsfrnBgmTq2OCD/s1000/logo+bank+bca-01.png"
               alt="BCA Logo"
               referrerPolicy="no-referrer"
-              className="w-full h-full object-contain"
+              className="h-8 sm:h-9 object-contain"
             />
           </div>
-          <div>
-            <div className="flex items-center gap-1.5">
-              <h3 className="font-bold text-sm text-white tracking-wide">Tanya BCA AI</h3>
-              <span className="bg-white/20 text-white text-[10px] font-extrabold px-1.5 py-0.5 rounded border border-white/30">
-                Cerdas
-              </span>
-            </div>
-            <p className="text-[11px] text-blue-100">Asisten Virtual Resmi Perbankan BCA</p>
-          </div>
-        </div>
 
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setShowInfoPanel(!showInfoPanel)}
-            className={`p-1.5 rounded-lg transition-all cursor-pointer ${
-              showInfoPanel ? 'bg-white/25 text-white' : 'hover:bg-white/15 text-blue-100 hover:text-white'
-            }`}
-            title="Tentang AI Aplikasi"
-          >
-            <Info className="w-5 h-5" />
-          </button>
           <button
             onClick={handleClose}
-            className="p-1.5 rounded-lg hover:bg-white/15 active:scale-90 text-blue-100 hover:text-white transition-all cursor-pointer"
-            title="Tutup Chat"
+            className="p-2 rounded-xl border border-slate-200 hover:bg-slate-100 active:scale-95 text-[#00529C] transition-all cursor-pointer font-bold"
+            aria-label="Tutup Chat"
           >
-            <X className="w-5 h-5" />
+            <X className="w-6 h-6 stroke-[2.2]" />
           </button>
         </div>
-      </div>
 
-      {/* Info Panel Explaining the App's AI */}
-      {showInfoPanel && (
-        <div className="bg-blue-50 border-b border-blue-200 p-3.5 shrink-0 text-xs text-slate-700 animate-in slide-in-from-top-2 duration-150 space-y-2">
-          <div className="flex items-center justify-between text-[#0066AE] font-bold">
-            <div className="flex items-center gap-1.5">
-              <Cpu className="w-4 h-4 text-[#0066AE]" />
-              <span>Tentang AI Aplikasi (Tanya BCA AI)</span>
+        {/* Row 2: Avatar, Title "Live Chat BCA", & "Online" status */}
+        <div className="px-5 py-3 border-t border-slate-100 flex items-center justify-between bg-[#FFFFFF]">
+          <div className="flex items-center gap-3.5">
+            <div className="w-11 h-11 rounded-full bg-[#00529C] flex items-center justify-center text-white shrink-0 shadow-sm relative">
+              <BcaBotIcon className="w-6 h-6 text-white" />
+              <span className="absolute bottom-0 right-0 w-3 h-3 bg-emerald-500 border-2 border-white rounded-full" />
             </div>
-            <button
-              onClick={() => setShowInfoPanel(false)}
-              className="text-slate-400 hover:text-slate-600 text-[10px] font-medium"
-            >
-              Tutup [X]
-            </button>
-          </div>
-          <p className="leading-relaxed text-[11px]">
-            <strong>Tanya BCA AI</strong> adalah asisten cerdas berbasis teknologi kecerdasan buatan (Gemini AI) yang dikhususkan untuk melayani kebutuhan perbankan nasabah Bank Central Asia.
-          </p>
-          <div className="space-y-1 text-[11px] text-slate-600">
-            <div className="flex items-start gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span><strong>Standar Bahasa Resmi:</strong> Bahasa profesional, ramah, dan terstruktur tanpa simbol berlebihan.</span>
-            </div>
-            <div className="flex items-start gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span><strong>Fokus Layanan Utama:</strong> Mengarahkan solusi darurat ke 4 menu bantuan resmi di portal BCA secara presisi.</span>
-            </div>
-            <div className="flex items-start gap-1.5">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
-              <span><strong>Keamanan Data:</strong> Beroperasi 24/7 dan tidak pernah meminta data rahasia seperti PIN, OTP, atau Kata Sandi.</span>
+            <div>
+              <div className="flex items-center gap-1.5">
+                <h2 className="font-extrabold text-slate-900 text-base sm:text-lg leading-tight tracking-tight">
+                  Tanya BCA Virtual Assistant
+                </h2>
+                <CheckCircle2 className="w-4 h-4 text-[#00529C] fill-blue-100 shrink-0" />
+              </div>
+              <div className="flex items-center gap-2 mt-0.5 text-xs font-bold">
+                <span className="text-emerald-600 flex items-center gap-1">
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 inline-block animate-pulse" />
+                  Online 24/7
+                </span>
+                <span className="text-slate-300">•</span>
+                <span className="text-slate-500 font-semibold">CS Resmi Terverifikasi</span>
+              </div>
             </div>
           </div>
         </div>
-      )}
+      </header>
 
-      {/* Messages Body - Clean White Background */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-3.5 bg-white text-xs sm:text-sm">
+      {/* Main Chat Messages Container */}
+      <div className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-3.5 text-slate-900 text-sm">
         
-        {/* Permanent AI Explanation Card at top of conversation */}
-        <div className="bg-slate-50 border border-slate-200 rounded-xl p-3 text-slate-600 space-y-1 text-[11px] leading-relaxed">
-          <div className="flex items-center gap-1.5 text-[#0066AE] font-bold text-xs">
-            <Sparkles className="w-3.5 h-3.5" />
-            <span>Kecerdasan Buatan Terintegrasi</span>
-          </div>
-          <p>
-            Layanan percakapan cerdas ini didukung oleh model AI perbankan untuk memberikan solusi cepat, tepat, dan resmi terkait layanan bantuan darurat BCA.
-          </p>
+        {/* Default Welcome Message Cards matching screenshot 1:1 */}
+        <div className="bg-[#FFFFFF] rounded-2xl p-4 shadow-sm border border-slate-200/90 max-w-[92%] leading-relaxed text-slate-900 font-semibold">
+          Halo! Selamat datang di Tanya BCA Virtual Assistant. Saya siap memandu Anda mengenai seluruh layanan yang tersedia di aplikasi ini. 😊
         </div>
 
+        <div className="bg-[#FFFFFF] rounded-2xl p-4 shadow-sm border border-slate-200/90 max-w-[92%] leading-relaxed text-slate-900 font-semibold">
+          Silakan pilih layanan bantuan aplikasi yang Anda butuhkan:
+        </div>
+
+        {/* Quick Option Pills matching 1:1 screenshot */}
+        <div className="flex flex-wrap gap-2.5 pt-1 max-w-[98%] pb-1">
+          {QUICK_OPTIONS.map((opt) => (
+            <button
+              key={opt}
+              onClick={() => handleSendMessage(opt)}
+              disabled={isLoading}
+              className="px-4 py-2 rounded-full bg-[#FFFFFF] border-2 border-[#00529C] text-[#00529C] font-extrabold text-xs sm:text-sm shadow-xs hover:bg-blue-50 active:bg-[#00529C] active:text-white transition-all duration-75 active:scale-90 cursor-pointer disabled:opacity-50"
+            >
+              {opt}
+            </button>
+          ))}
+        </div>
+
+        {/* Dynamic Chat Messages */}
         {messages.map((msg) => (
           <div
             key={msg.id}
-            className={`flex gap-2.5 transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}
+            className={`flex flex-col transition-all duration-300 animate-in fade-in slide-in-from-bottom-2 ${
+              msg.role === 'user' ? 'items-end' : 'items-start'
+            }`}
           >
-            {msg.role === 'assistant' && (
-              <div className="shrink-0 w-7 h-7 rounded-lg bg-white border border-slate-200 flex items-center justify-center shadow-sm mt-0.5 p-0.5 overflow-hidden">
-                <img
-                  src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiEShyphenhyphenecrz4Lyrs3a8-h3oG-6Hqh5FMdYhVba8_4NMy_60IXDS6stwE6cSp_LL9TfhfpLM4I6IyGZTZUL5ZfTOHAsTKTYx8FqW3xVPM0_RiXRRBgoajU6OT-G5BXtKPFzMsfrnBgmTq2OCD/s1000/logo+bank+bca-01.png"
-                  alt="BCA AI"
-                  referrerPolicy="no-referrer"
-                  className="w-full h-full object-contain"
-                />
-              </div>
-            )}
-
             <div
-              className={`max-w-[82%] px-3.5 py-2.5 rounded-2xl shadow-sm ${
+              className={`max-w-[88%] px-4 py-3 rounded-2xl shadow-sm ${
                 msg.role === 'user'
-                  ? 'bg-[#0066AE] text-white rounded-br-none'
-                  : 'bg-slate-100 text-slate-800 rounded-bl-none border border-slate-200'
+                  ? 'bg-[#00529C] text-white rounded-tr-none font-semibold'
+                  : 'bg-[#FFFFFF] text-slate-900 font-medium rounded-tl-none border border-slate-200/90'
               }`}
             >
               <div className="whitespace-pre-wrap leading-relaxed space-y-1">
-                {(() => {
-                  // Clean raw HTML tags and markdown header hashes
-                  const cleaned = msg.text
-                    .replace(/<[^>]*>?/gm, '')
-                    .replace(/###\s?/g, '');
-
-                  return cleaned.split('\n').map((line, idx) => {
-                    const parts = line.split(/(\*\*.*?\*\*)/g);
-                    return (
-                      <p key={idx} className="min-h-[1.1rem]">
-                        {parts.map((part, pIdx) => {
-                          if (part.startsWith('**') && part.endsWith('**')) {
-                            return (
-                              <strong key={pIdx} className={msg.role === 'user' ? 'font-bold text-white' : 'font-bold text-[#003B73]'}>
-                                {part.slice(2, -2)}
-                              </strong>
-                            );
-                          }
-                          return part;
-                        })}
-                      </p>
-                    );
-                  });
-                })()}
+                {formatMessageContent(msg.text, msg.role)}
               </div>
               <span className={`block text-[9px] mt-1 text-right ${msg.role === 'user' ? 'text-blue-100' : 'text-slate-400'}`}>
                 {msg.timestamp}
               </span>
             </div>
 
-            {msg.role === 'user' && (
-              <div className="shrink-0 w-7 h-7 rounded-lg bg-[#003B73] flex items-center justify-center text-white mt-0.5">
-                <User className="w-4 h-4" />
+            {/* In-Chat Interactive Action Buttons for Assistant Responses */}
+            {msg.role === 'assistant' && (
+              <div className="flex flex-wrap gap-1.5 mt-2 max-w-[90%]">
+                {getInChatActionButtons(msg.text).map((btn, btnIdx) => (
+                  <button
+                    key={btnIdx}
+                    onClick={() => handleActionButtonClick(btn)}
+                    disabled={isLoading}
+                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-[#00529C] font-bold text-xs shadow-xs hover:bg-slate-50 active:scale-95 transition-all cursor-pointer disabled:opacity-50"
+                  >
+                    {btn.icon}
+                    <span>{btn.label}</span>
+                  </button>
+                ))}
               </div>
             )}
           </div>
         ))}
 
         {isLoading && (
-          <div className="flex items-center gap-2.5 text-[#0066AE] text-xs bg-blue-50 p-3 rounded-2xl w-fit border border-blue-200 animate-pulse">
-            <img
-              src="https://blogger.googleusercontent.com/img/b/R29vZ2xl/AVvXsEiEShyphenhyphenecrz4Lyrs3a8-h3oG-6Hqh5FMdYhVba8_4NMy_60IXDS6stwE6cSp_LL9TfhfpLM4I6IyGZTZUL5ZfTOHAsTKTYx8FqW3xVPM0_RiXRRBgoajU6OT-G5BXtKPFzMsfrnBgmTq2OCD/s1000/logo+bank+bca-01.png"
-              alt="BCA AI Loading"
-              referrerPolicy="no-referrer"
-              className="w-4 h-4 object-contain animate-spin"
-            />
-            <span className="font-medium">Tanya BCA AI sedang berpikir...</span>
+          <div className="flex items-center gap-2.5 bg-white p-3.5 rounded-2xl w-fit shadow-xs border border-slate-100/80 text-[#00529C] text-xs font-medium animate-pulse">
+            <BcaBotIcon className="w-5 h-5 text-[#00529C] animate-bounce" />
+            <span>Virtual Assistant sedang mengetik...</span>
           </div>
         )}
 
@@ -294,48 +373,49 @@ export const BcaAiAssistant: React.FC<BcaAiAssistantProps> = ({ isOpen, onClose 
         <div ref={messagesEndRef} />
       </div>
 
-      {/* Quick Prompt Chips */}
-      <div className="bg-slate-50 px-3 py-2 border-t border-slate-200 flex gap-1.5 overflow-x-auto no-scrollbar shrink-0">
-        {QUICK_PROMPTS.map((prompt, idx) => (
-          <button
-            key={idx}
-            onClick={() => handleSendMessage(prompt)}
-            disabled={isLoading}
-            className="shrink-0 text-[10px] sm:text-[11px] bg-blue-50 hover:bg-blue-100 active:scale-95 text-[#0066AE] font-medium border border-blue-200/80 px-2.5 py-1 rounded-full transition-all cursor-pointer disabled:opacity-50"
-          >
-            {prompt}
-          </button>
-        ))}
-      </div>
+      {/* Action Toast Notification */}
+      {toastMessage && (
+        <div className="absolute top-24 left-1/2 -translate-x-1/2 z-50 bg-[#00529C] text-white text-xs font-bold px-4 py-2.5 rounded-full shadow-xl border border-cyan-300/40 flex items-center gap-2 animate-in fade-in slide-in-from-top-2 duration-200">
+          <CheckCircle2 className="w-4 h-4 text-cyan-300 shrink-0" />
+          <span>{toastMessage}</span>
+        </div>
+      )}
 
-      {/* Input Footer */}
-      <div className="p-3 bg-white border-t border-slate-200 shrink-0">
+      {/* Input Bar matching 1:1 screenshot */}
+      <footer className="p-3.5 sm:p-4 bg-[#F2F4F8] border-t border-slate-200/80 shrink-0">
         <form
           onSubmit={(e) => {
             e.preventDefault();
             handleSendMessage();
           }}
-          className="flex items-center gap-2"
+          className="flex items-center gap-2.5"
         >
           <input
             type="text"
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            placeholder="Ketik pertanyaan perbankan BCA..."
+            placeholder="Ketik pesan Anda..."
             disabled={isLoading}
-            className="flex-1 bg-slate-100 border border-slate-300 rounded-xl px-3.5 py-2 text-xs sm:text-sm text-slate-800 placeholder-slate-400 focus:outline-none focus:bg-white focus:border-[#0066AE] focus:ring-1 focus:ring-[#0066AE] transition-all"
+            className="flex-1 bg-[#FFFFFF] border border-slate-300 rounded-full px-5 py-3 text-xs sm:text-sm font-medium text-slate-900 placeholder-slate-400 shadow-xs focus:outline-none focus:border-[#00529C] focus:ring-1 focus:ring-[#00529C] transition-all"
           />
           <button
             type="submit"
             disabled={!input.trim() || isLoading}
-            className="bg-[#0066AE] hover:bg-[#00528D] active:scale-95 disabled:opacity-40 disabled:pointer-events-none text-white p-2 sm:p-2.5 rounded-xl transition-all cursor-pointer shadow-sm"
-            title="Kirim Pesan"
+            className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 transition-all cursor-pointer shadow-xs active:scale-95 ${
+              input.trim() && !isLoading
+                ? 'bg-[#00529C] text-white hover:bg-[#00407A]'
+                : 'bg-slate-200/90 text-slate-400'
+            }`}
+            aria-label="Kirim Pesan"
           >
-            <Send className="w-4 h-4" />
+            <Send className="w-5 h-5 -rotate-12 translate-x-0.5" />
           </button>
         </form>
-      </div>
-    </div>
+      </footer>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 };
+
 

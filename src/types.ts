@@ -28,3 +28,13 @@ export interface SmartbarItem {
   isAi?: boolean;
 }
 
+export interface BankOption {
+  id: string;
+  name: string;
+  displayName: string;
+  gradient: string;
+  logo: string;
+}
+
+export type KlikBcaMode = 'Perorangan' | 'Bisnis';
+

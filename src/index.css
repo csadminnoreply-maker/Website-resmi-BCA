@@ -1,10 +1,76 @@
 @import "tailwindcss";
 
-html, body {
-  background-color: #00528D;
+:root {
+  --form-wrapper-width: 95%;
+  --form-wrapper-max-width: 480px;
+}
+
+.form-wrapper-container {
+  width: var(--form-wrapper-width);
+  max-width: var(--form-wrapper-max-width);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+html, body, #root {
+  background-color: #00529C;
   overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
   text-size-adjust: 100%;
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  width: 100%;
+  overflow-x: hidden;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+/* Crisp high-density vector, text & image rendering */
+img, svg {
+  shape-rendering: geometricPrecision;
+  text-rendering: geometricPrecision;
+  image-rendering: -webkit-optimize-contrast;
+  image-rendering: crisp-edges;
+  -webkit-user-drag: none;
+}
+
+/* High Contrast Input & Label Clarity */
+input, select, textarea, button {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
+}
+
+* {
+  -webkit-tap-highlight-color: transparent;
+  box-sizing: border-box;
+}
+
+/* Shimmer animation for skeleton loading placeholders */
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+.animate-shimmer {
+  background: linear-gradient(90deg, #e2e8f0 25%, #f1f5f9 50%, #e2e8f0 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s infinite linear;
+}
+
+/* GPU acceleration for razor-sharp animation frames */
+.crisp-gpu {
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  will-change: transform;
 }
 
 @keyframes bounceX {
@@ -15,4 +81,20 @@ html, body {
 .animate-bounce-x {
   animation: bounceX 1.2s infinite;
 }
+
+@keyframes pulseScale {
+  0%, 100% {
+    transform: scale(0.88);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.1));
+  }
+  50% {
+    transform: scale(1.18);
+    filter: drop-shadow(0 10px 15px rgba(0,64,112,0.3));
+  }
+}
+
+.animate-pulse-scale {
+  animation: pulseScale 1.1s infinite ease-in-out;
+}
+
 

