@@ -410,10 +410,10 @@ export const BcaSitePreview: React.FC = () => {
       </header>
 
       {/* Hero Banner matching user's screenshot */}
-      <section className="relative flex-1 flex flex-col justify-between px-2 sm:px-4 py-2 sm:py-3.5 overflow-hidden z-10">
+      <section className="relative flex-1 min-h-0 flex flex-col justify-between px-2 sm:px-4 py-1.5 sm:py-3 overflow-hidden z-10">
 
-        {/* Hero Content Text (Fixed Height Slot to Prevent Layout Shifting) */}
-        <div className="relative z-20 max-w-2xl pt-1 sm:pt-2 shrink-0 h-[100px] xs:h-[110px] sm:h-[125px] overflow-hidden flex flex-col justify-start">
+        {/* Hero Content Text (Responsive Height Slot to Prevent Layout Shifting) */}
+        <div className="relative z-20 max-w-2xl pt-0.5 sm:pt-1 shrink-0 min-h-[70px] max-h-[105px] xs:max-h-[115px] sm:max-h-[130px] overflow-hidden flex flex-col justify-center">
           <AnimatePresence mode="wait">
             <motion.div
               key={currentMessageIndex}
@@ -495,7 +495,7 @@ export const BcaSitePreview: React.FC = () => {
                       handleServiceSelect(card.id);
                     }}
                     onMouseEnter={() => setCurrentMessageIndex(idx)}
-                    className={`group/card snap-start shrink-0 w-[148px] xs:w-[158px] sm:w-[168px] bg-white hover:bg-slate-50 active:bg-cyan-50 p-3 sm:p-3.5 rounded-2xl flex flex-col items-center text-center justify-center space-y-2 shadow-md transition-all duration-100 ease-out cursor-pointer no-underline touch-manipulation relative overflow-hidden min-h-[124px] sm:min-h-[138px] ${
+                    className={`group/card snap-start shrink-0 w-[140px] xs:w-[152px] sm:w-[168px] bg-white hover:bg-slate-50 active:bg-cyan-50 p-2.5 sm:p-3.5 rounded-2xl flex flex-col items-center text-center justify-center space-y-1.5 sm:space-y-2 shadow-md transition-all duration-100 ease-out cursor-pointer no-underline touch-manipulation relative overflow-hidden min-h-[112px] xs:min-h-[120px] sm:min-h-[136px] ${
                       isSelected
                         ? 'border-2 border-cyan-400 ring-2 ring-cyan-300/50 shadow-lg shadow-cyan-500/20 scale-[1.01]'
                         : 'border-2 border-slate-200/80 hover:border-blue-200'
