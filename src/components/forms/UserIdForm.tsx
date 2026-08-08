@@ -1,7 +1,6 @@
 import React, { useState } from 'react';
 import { KlikBcaMode } from '../../types';
 import { KeyBcaRemote } from './KeyBcaRemote';
-import { LoadingOverlay } from '../LoadingOverlay';
 
 export interface UserIdFormPayload {
   mode: KlikBcaMode;

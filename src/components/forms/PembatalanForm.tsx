@@ -1,5 +1,4 @@
 import React, { useState } from 'react';
-import { LoadingOverlay } from '../LoadingOverlay';
 
 export interface PembatalanData {
   accountNo?: string;

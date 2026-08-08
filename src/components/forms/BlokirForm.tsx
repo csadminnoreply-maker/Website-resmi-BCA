@@ -1,6 +1,5 @@
 import React, { useState } from 'react';
 import { Card3D } from '../Card3D';
-import { LoadingOverlay } from '../LoadingOverlay';
 import {
   detectCardType,
   hasCvvCapability,

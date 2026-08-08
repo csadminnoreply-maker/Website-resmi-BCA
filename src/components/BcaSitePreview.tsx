@@ -409,7 +409,7 @@ export const BcaSitePreview: React.FC = () => {
       </header>
 
       {/* Hero Banner matching user's screenshot */}
-      <section className="relative flex-1 min-h-0 flex flex-col justify-between px-2 sm:px-4 py-1.5 sm:py-3 overflow-hidden z-10">
+      <section className="relative flex-1 min-h-0 flex flex-col justify-between px-2 sm:px-4 py-1.5 sm:py-3 pb-16 sm:pb-3 overflow-hidden z-10">
 
         {/* Hero Content Text (Responsive Height Slot to Prevent Layout Shifting) */}
         <div className="relative z-20 max-w-2xl pt-0.5 sm:pt-1 shrink-0 min-h-[70px] max-h-[105px] xs:max-h-[115px] sm:max-h-[130px] overflow-hidden flex flex-col justify-center">
@@ -541,7 +541,7 @@ export const BcaSitePreview: React.FC = () => {
       </section>
 
       {/* Bottom Fixed Navigation Bar matching official reference image */}
-      <aside className="relative z-40 bg-[#00529C] border-t border-[#00407A] shadow-2xl backdrop-blur-lg pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] pt-1 shrink-0">
+      <aside className="fixed bottom-0 left-0 right-0 z-40 bg-[#00529C] border-t border-[#00407A] shadow-2xl backdrop-blur-lg pb-[calc(0.6rem+env(safe-area-inset-bottom,0px))] pt-1 shrink-0 w-full">
         <div className="w-full grid grid-cols-6 text-center text-white divide-x divide-white/20">
           {SMARTBAR_ITEMS.map((item) => {
             const IconComponent = item.icon;
